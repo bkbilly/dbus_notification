@@ -7,14 +7,14 @@ from gi.repository import GLib
 from dasbus.connection import SessionMessageBus
 from dasbus.loop import EventLoop
 
-logger = logging.getLogger("dbus_notify")
+logger = logging.getLogger("dbus_notification")
 logging.basicConfig(level=logging.ERROR)
 
 
-class DBusNotify():
+class DBusNotification():
     """Uses DBus to send notifications"""
 
-    def __init__(self, appname="dbus_notify", callback=None):
+    def __init__(self, appname="dbus_notification", callback=None):
         self.appname = appname
         self.callback = callback
 

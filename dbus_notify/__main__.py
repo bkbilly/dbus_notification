@@ -1,11 +1,11 @@
 import json
 import argparse
-from . import DBusNotify
+from . import DBusNotification
 
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="dbus-notify",
+        prog="dbus-notification",
         description="Sends a notification")
     parser.add_argument("-t", "--title", default="", help="Title of notification")
     parser.add_argument("-m", "--message", default="", help="Subtitle of notification")
@@ -16,7 +16,7 @@ def main():
     parser.add_argument("-c", "--timeout", default=-1, type=int, help="When to automatically close the notification")
     args = parser.parse_args()
 
-    DBusNotify().send(
+    DBusNotification().send(
         args.title, args.message,
         logo=args.logo,
         image=args.image,

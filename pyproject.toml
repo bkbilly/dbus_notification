@@ -3,7 +3,7 @@ requires = ["setuptools~=69.2.0", "wheel~=0.43.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name              = "dbus_notify"
+name              = "dbus_notification"
 version           = "2024.7.0"
 description       = "Sends notifications using DBus"
 readme            = "README.md"
@@ -24,10 +24,10 @@ dependencies = [
 
 
 [project.urls]
-"Source Code" = "https://github.com/bkbilly/dbus_notify"
+"Source Code" = "https://github.com/bkbilly/dbus_notification"
 
 [tool.setuptools.packages.find]
-include = ["dbus_notify*"]
+include = ["dbus_notification*"]
 
 [project.scripts]
-dbus-notify = "dbus_notify.__main__:main"
+dbus-notification = "dbus_notification.__main__:main"

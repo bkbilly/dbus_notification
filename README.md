@@ -1,8 +1,8 @@
-# DBus Notify
+# DBus Notification
 
-[![PyPI](https://img.shields.io/pypi/v/dbus-notify.svg)](https://pypi.python.org/pypi/dbus-notify)
-![Python versions](https://img.shields.io/pypi/pyversions/dbus-notify.svg)
-![License](https://img.shields.io/pypi/l/dbus-notify.svg)
+[![PyPI](https://img.shields.io/pypi/v/dbus-notification.svg)](https://pypi.python.org/pypi/dbus-notification)
+![Python versions](https://img.shields.io/pypi/pyversions/dbus-notification.svg)
+![License](https://img.shields.io/pypi/l/dbus-notification.svg)
 
 
 This library provides a simple interface for creating and displaying desktop notifications with custom buttons. Please note that some features might have varying levels of support across different Linux distributions.
@@ -18,7 +18,7 @@ This library provides a simple interface for creating and displaying desktop not
 
 ## Requirements
 
-DBus Notify has minimal system dependencies:
+DBus Notification has minimal system dependencies:
 * Python 3.7 or later
 * `dasdbus` library
 
@@ -27,7 +27,7 @@ DBus Notify has minimal system dependencies:
 Install the library using pip:
 
 ```bash
-pip install dbus-notify
+pip install dbus-notification
 ```
 
 ## Usage
@@ -36,11 +36,11 @@ This library offers two primary usage approaches:
 
 ### Command-Line Interaction
 
-If you prefer a quick way to view information or control playback, you can potentially execute the dbus-notify script directly, though this doesn't support button actions. For more extensive programmatic control, I would recommend using the library within your Python code.
+If you prefer a quick way to view information or control playback, you can potentially execute the dbus-notification script directly, though this doesn't support button actions. For more extensive programmatic control, I would recommend using the library within your Python code.
 
 ### Programmatic Control
 
-Import the DBusNotify class from your Python code:
+Import the DBusNotification class from your Python code:
 
 ```python
 def callback(notification_type, notification_id, reason):
@@ -49,7 +49,7 @@ def callback(notification_type, notification_id, reason):
     elif notification_type == "button":
         print(f"Notification {notification_id} has clicked on the button {reason}.")
 
-DBusNotify(appname="dbus_notify", callback=callback).send(
+DBusNotification(appname="dbus_notification", callback=callback).send(
     title="test",
     message="this is a test message",
     logo="logo.png",
