@@ -23,6 +23,7 @@ class DBusNotification():
             service_name="org.freedesktop.Notifications",
             object_path="/org/freedesktop/Notifications",
         )
+        self.history = {}
         if callback is not None:
             self.proxy.NotificationClosed.connect(self.callback_closed)
             self.proxy.ActionInvoked.connect(self.callback_button)
@@ -56,11 +57,26 @@ class DBusNotification():
             self.appname, notifyid, logo, title, message, actions, hints, timeout
         )
         logger.debug("The notification {} was sent.".format(notification_id))
+        history = {
+            "id": notification_id,
+            "title": title,
+            "message": message,
+            "logo": logo,
+            "image": image,
+            "sound": sound,
+            "actions": actions,
+            "urgency": urgency,
+            "timeout": timeout,
+        }
+        self.history[notification_id] = {k: v for k, v in history.items() if v is not None}
 
     def callback_closed(self, notification_id, reason):
         logger.debug(f"{notification_id}: The notification closed because of {reason}.")
-        self.callback("closed", notification_id, reason)
+        notification = self.history.get(notification_id, {"id": notification_id})
+        self.callback("closed", notification)
 
     def callback_button(self, notification_id, reason):
         logger.debug(f"{notification_id}: The notification button {reason} was clicked.")
-        self.callback("button", notification_id, reason)
+        notification = self.history.get(notification_id, {"id": notification_id})
+        notification["button"] = reason
+        self.callback("button", notification)

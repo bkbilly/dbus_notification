@@ -43,11 +43,14 @@ If you prefer a quick way to view information or control playback, you can poten
 Import the DBusNotification class from your Python code:
 
 ```python
-def callback(notification_type, notification_id, reason):
+import time
+from dbus_notification import DBusNotification
+
+def callback(notification_type, notification):
     if notification_type == "closed":
-        print(f"Notification {notification_id} has closed.")
+        print(f"Notification {notification["id"]} has closed.")
     elif notification_type == "button":
-        print(f"Notification {notification_id} has clicked on the button {reason}.")
+        print(f"Notification {notification["id"]} has clicked on the button {notification["button"]}.")
 
 DBusNotification(appname="dbus_notification", callback=callback).send(
     title="test",
