@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name              = "dbus_notification"
-version           = "2024.7.2"
+version           = "2025.3.0"
 description       = "Sends notifications using DBus"
 readme            = "README.md"
 keywords          = ["lnxlink"]
@@ -18,8 +18,7 @@ classifiers = [
     "Operating System :: Unix",
 ]
 dependencies = [
-    "dasbus>=1.7",
-    "PyGObject>=3.44.0"
+    "jeepney>=0.9.0"
 ]
 
 
