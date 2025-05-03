@@ -7,7 +7,7 @@ from jeepney import DBusAddress, new_method_call, MessageType, MatchRule, Header
 from jeepney.io.blocking import open_dbus_connection
 
 logger = logging.getLogger("dbus_notification")
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.WARNING)
 
 
 class DBusNotification():
@@ -75,7 +75,7 @@ class DBusNotification():
             )
         )
         notification_id = self.conn.send_and_get_reply(msg).body[0]
-        print(f"Notification sent with ID: {notification_id}")
+        logger.debug("Notification sent with ID: %s", notification_id)
         self.history[notification_id] = {
             "id": notification_id,
             "title": title,
@@ -91,6 +91,7 @@ class DBusNotification():
     def callback_button(self):
         # Create match rule for ActionInvoked signals
         time.sleep(0.3)
+        logger.debug("Start callback")
         rule = MatchRule(
             type="signal",
             interface="org.freedesktop.Notifications",
@@ -110,7 +111,7 @@ class DBusNotification():
         )
         self.conn.send_and_get_reply(add_match_msg)
         
-        print("Waiting for action clicks... (Press Ctrl+C to exit)")
+        logger.debug("Waiting for action clicks...")
         while True:
             try:
                 msg = self.conn.receive()
@@ -120,6 +121,9 @@ class DBusNotification():
                         notification = self.history.get(notification_id, {"id": notification_id})
                         notification["button"] = action_key.removeprefix(f"{self.appname}_")
                         self.callback("button", notification)
-
-            except:
-                continue
+            except Exception as err:
+                logger.warning(
+                    "Error processing notification action: %s, %s",
+                    err,
+                    traceback.format_exc(),
+                )
