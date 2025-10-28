@@ -119,7 +119,8 @@ class DBusNotification():
 
     def close_all(self):
         """Closes all notifications tracked by this instance's history."""
-        for notifyid in self.history.keys():
+        notification_ids = list(self.history.keys())
+        for notifyid in notification_ids:
             self.close(notifyid)
         
     def callback_button(self):
