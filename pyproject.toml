@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name              = "dbus_notification"
-version           = "2025.5.0"
+version           = "2025.10.0"
 description       = "Sends notifications using DBus"
 readme            = "README.md"
 keywords          = ["lnxlink"]
