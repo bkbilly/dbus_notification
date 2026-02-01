@@ -144,18 +144,27 @@ class DBusNotification():
             "s",
             (rule.serialise(),)
         )
-        self.conn.send_and_get_reply(add_match_msg)
+        listen_conn = open_dbus_connection()
+        listen_conn.send_and_get_reply(add_match_msg)
         
         logger.debug("Waiting for action clicks...")
         while True:
             try:
-                msg = self.conn.receive()
-                if msg.header.fields.get(HeaderFields.destination) and len(msg.body) == 2:
-                    notification_id, action_key = msg.body
-                    if isinstance(action_key, str) and action_key.startswith(self.appname):
-                        notification = self.history.get(notification_id, {"id": notification_id})
-                        notification["button"] = action_key.removeprefix(f"{self.appname}_")
-                        self.callback("button", notification)
+                msg = listen_conn.receive()
+                if msg.header.message_type != MessageType.signal:
+                    continue
+                if msg.header.fields.get(HeaderFields.member) != "ActionInvoked":
+                    continue
+                if len(msg.body) != 2:
+                    continue
+                notification_id, action_key = msg.body
+                if not isinstance(action_key, str):
+                    continue
+                if not action_key.startswith(self.appname):
+                    continue
+                notification = self.history.get(notification_id, {"id": notification_id})
+                notification["button"] = action_key.removeprefix(f"{self.appname}_")
+                self.callback("button", notification)
             except Exception as err:
                 logger.warning(
                     "Error processing notification action: %s, %s",
