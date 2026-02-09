@@ -44,7 +44,8 @@ class DBusNotification():
             actions=[],
             urgency=None,
             timeout=-1,
-            notifyid=0):
+            notifyid=0,
+            uniqueid=None):
 
         hints = {}
         if urgency is not None:
@@ -62,6 +63,11 @@ class DBusNotification():
             # The actions array requires pairs of strings: [action_id_1, label_1, action_id_2, label_2, ...]
             actions = [f"{self.appname}_{s}" if i % 2 == 0 else s for s in actions for i in (0, 1)]
         
+        # Finds the notification ID for the uniqueid if provided, otherwise uses 0 for new notification
+        if uniqueid is not None and uniqueid != "":
+            notifyid = next((k for k, v in reversed(self.history.items()) if uniqueid in v["uniqueid"]), 0)
+            logger.debug("Found notification ID %s for unique ID %s.", notifyid, uniqueid)
+
         # Send the notification
         msg = new_method_call(
             self.notifications,
@@ -92,11 +98,22 @@ class DBusNotification():
             "actions": actions,
             "urgency": urgency,
             "timeout": timeout,
+            "uniqueid": uniqueid,
         }
         return notification_id
 
-    def close(self, notifyid):
+    def close(self, id_or_uniqueid):
         """Closes a specific notification using its ID."""
+        if isinstance(id_or_uniqueid, int):
+            notifyid = id_or_uniqueid
+        elif isinstance(id_or_uniqueid, str):
+            notifyid = next((k for k, v in reversed(self.history.items()) if id_or_uniqueid in v["uniqueid"]), None)
+            if notifyid is None:
+                logger.warning("Could not find a valid notification ID for: %s", id_or_uniqueid)
+                return
+        else:
+            return
+
         if notifyid not in self.history:
             # Only log a warning if the ID isn't in our local history, but attempt to close it anyway.
             logger.warning("Notification ID %s not found in local history, but attempting to close via DBus.", notifyid)

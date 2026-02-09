@@ -5,18 +5,16 @@
 ![License](https://img.shields.io/pypi/l/dbus-notification.svg)
 
 
-This library provides a simple interface for creating and displaying desktop notifications with custom buttons. Please note that some features might have varying levels of support across different Linux distributions.
+This library provides a simple interface for creating and displaying desktop notifications with custom buttons using DBus.
 
 
 ## Features:
 
- * Send notifications with custom titles, messages, and images
- * Include clickable buttons for user interaction
- * Control notification urgency, timeout, and sound
- * Replace an active notification using its ID.
- * Close a specific notification by its ID.
- * Clear all notifications sent by the application.
- * Receive callbacks when a notification is closed by the user, client, or timeout.
+ * **Send notifications** with custom titles, messages, and images
+ * **Interactive Buttons**: Include clickable buttons that trigger callbacks
+ * **Urgency & Sounds**: Control urgency levels (0, 1, or 2) and trigger system sounds or file-based alerts
+ * **Management**: Replace, close, or clear all notifications sent by the application
+ * **Unique Tracking**: Use `uniqueid` to update specific notifications without managing raw notification IDs
 **Note:** Some features might have limited support depending on your desktop environment.
 
 
@@ -36,15 +34,29 @@ pip install dbus-notification
 
 ## Usage
 
-This library offers two primary usage approaches:
-
 ### Command-Line Interaction
 
-If you prefer a quick way to view information or control playback, you can potentially execute the dbus-notification script directly, though this doesn't support button actions. For more extensive programmatic control, I would recommend using the library within your Python code.
+You can send quick notifications directly from your terminal using the following flags:
+| Flag | Description |
+| --- | --- |
+| `-t`, `--title` | The bold heading of the notification. |
+| `-m`, `--message` | The body text of the notification. |
+| `-l`, `--logo` | Path to a small icon/logo. |
+| `-i`, `--image` | Path to a large image preview. |
+| `-s`, `--sound` | System sound name (e.g., `message-new-instant`) or full file path. |
+| `-u`, `--urgency` | `0` (Low), `1` (Normal), or `2` (Critical). |
+| `-c`, `--timeout` | Milliseconds until the notification expires (`-1` for default). |
+
+
+Example:
+
+```bash
+dbus-notification -t "Hello" -m "This is a test" -u 1
+```
 
 ### Programmatic Control
 
-Import the DBusNotification class from your Python code:
+The `DBusNotification` class allows for advanced interaction and button callbacks.
 
 ```python
 import time
@@ -67,13 +79,14 @@ notification_id = dbus_app.send(
     actions=["Test Button"],
     urgency=1,
     timeout=5000, # 5 seconds
+    uniqueid="test_notification",
 )
 time.sleep(3)
 
 notification_id = dbus_app.send(
     title="Updated Message",
     message="This is the new message body.",
-    notifyid=notification_id,
+    uniqueid="test_notification",
 )
 time.sleep(3)
 dbus_app.close(notification_id)
@@ -83,10 +96,6 @@ dbus_app.send(title="N3", message="A third notification.")
 time.sleep(3)
 
 dbus_app.close_all()
-
-# Keep the app running
-while True:
-    time.sleep(1)
 ```
 
 ## Future Features
