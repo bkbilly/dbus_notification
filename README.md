@@ -64,9 +64,9 @@ from dbus_notification import DBusNotification
 
 def callback(notification_type, notification):
     if notification_type == "closed":
-        print(f"Notification {notification["id"]} has closed.")
+        print(f"Notification {notification['id']} has closed.")
     elif notification_type == "button":
-        print(f"Notification {notification["id"]} has clicked on the button {notification["button"]}.")
+        print(f"Notification {notification['id']} has clicked on the button {notification['button']}.")
 
 dbus_app = DBusNotification(appname="dbus_notification", callback=callback)
 
@@ -95,7 +95,19 @@ dbus_app.send(title="N2", message="A second notification.")
 dbus_app.send(title="N3", message="A third notification.")
 time.sleep(3)
 
-dbus_app.close_all()
+dbus_app.close()
+```
+
+To run a long-running callback monitor from a source checkout:
+
+```bash
+python examples/callback_monitor.py
+```
+
+To create 10 notifications with unique IDs and close them one by one:
+
+```bash
+python examples/close_unique_notifications.py
 ```
 
 ## Future Features

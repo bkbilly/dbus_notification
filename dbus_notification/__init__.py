@@ -30,7 +30,7 @@ class DBusNotification():
         self.history = {}
         if self.callback is not None:
             mythread = threading.Thread(
-                target=self.callback_button,
+                target=self.callback_notifications,
                 daemon=True,
             )
             mythread.start()
@@ -41,7 +41,7 @@ class DBusNotification():
             logo="",
             image=None,
             sound=None,
-            actions=[],
+            actions=None,
             urgency=None,
             timeout=-1,
             notifyid=0,
@@ -58,14 +58,17 @@ class DBusNotification():
             else:
                 hints["sound-name"] = ("s", sound)
         
+        if actions is None:
+            actions = []
+
         # Ensure actions are formatted as key-value pairs (Action ID, Localized Label)
         if len(actions) > 0:
             # The actions array requires pairs of strings: [action_id_1, label_1, action_id_2, label_2, ...]
             actions = [f"{self.appname}_{s}" if i % 2 == 0 else s for s in actions for i in (0, 1)]
         
         # Finds the notification ID for the uniqueid if provided, otherwise uses 0 for new notification
-        if uniqueid is not None and uniqueid != "":
-            notifyid = next((k for k, v in reversed(self.history.items()) if uniqueid in v["uniqueid"]), 0)
+        if uniqueid not in [None, ""]:
+            notifyid = self._find_notification_id(uniqueid) or 0
             logger.debug("Found notification ID %s for unique ID %s.", notifyid, uniqueid)
 
         # Send the notification
@@ -102,12 +105,24 @@ class DBusNotification():
         }
         return notification_id
 
-    def close(self, id_or_uniqueid):
+    def _find_notification_id(self, uniqueid):
+        """Find a notification ID by exact unique ID."""
+        if uniqueid in [None, ""]:
+            return None
+        for notification_id, notification in reversed(self.history.items()):
+            if notification.get("uniqueid") == uniqueid:
+                return notification_id
+        return None
+
+    def close(self, id_or_uniqueid=None):
         """Closes a specific notification using its ID."""
+        if id_or_uniqueid in [None, ""]:
+            self.close_all()
+            return
         if isinstance(id_or_uniqueid, int):
             notifyid = id_or_uniqueid
         elif isinstance(id_or_uniqueid, str):
-            notifyid = next((k for k, v in reversed(self.history.items()) if id_or_uniqueid in v["uniqueid"]), None)
+            notifyid = self._find_notification_id(id_or_uniqueid)
             if notifyid is None:
                 logger.warning("Could not find a valid notification ID for: %s", id_or_uniqueid)
                 return
@@ -140,51 +155,67 @@ class DBusNotification():
         for notifyid in notification_ids:
             self.close(notifyid)
         
-    def callback_button(self):
-        # Create match rule for ActionInvoked signals
+    def callback_notifications(self):
+        """Listen for notification callback signals."""
         time.sleep(0.3)
         logger.debug("Start callback")
-        rule = MatchRule(
-            type="signal",
-            interface="org.freedesktop.Notifications",
-            member="ActionInvoked",
-            path="/org/freedesktop/Notifications"
-        )
-        
-        # Convert rule to string format needed for AddMatch
-        rule_str = str(rule)
-
-        # Add the match rule
-        add_match_msg = new_method_call(
-            DBusAddress("/org/freedesktop/DBus", "org.freedesktop.DBus"),
-            "AddMatch",
-            "s",
-            (rule.serialise(),)
-        )
         listen_conn = open_dbus_connection()
-        listen_conn.send_and_get_reply(add_match_msg)
-        
-        logger.debug("Waiting for action clicks...")
+        for member in ["ActionInvoked", "NotificationClosed"]:
+            rule = MatchRule(
+                type="signal",
+                interface="org.freedesktop.Notifications",
+                member=member,
+                path="/org/freedesktop/Notifications"
+            )
+            add_match_msg = new_method_call(
+                DBusAddress("/org/freedesktop/DBus", "org.freedesktop.DBus"),
+                "AddMatch",
+                "s",
+                (rule.serialise(),)
+            )
+            listen_conn.send_and_get_reply(add_match_msg)
+
+        logger.debug("Waiting for notification callbacks...")
         while True:
             try:
                 msg = listen_conn.receive()
-                if msg.header.message_type != MessageType.signal:
-                    continue
-                if msg.header.fields.get(HeaderFields.member) != "ActionInvoked":
-                    continue
-                if len(msg.body) != 2:
-                    continue
-                notification_id, action_key = msg.body
-                if not isinstance(action_key, str):
-                    continue
-                if not action_key.startswith(self.appname):
-                    continue
-                notification = self.history.get(notification_id, {"id": notification_id})
-                notification["button"] = action_key.removeprefix(f"{self.appname}_")
-                self.callback("button", notification)
+                self._handle_callback_signal(msg)
             except Exception as err:
                 logger.warning(
                     "Error processing notification action: %s, %s",
                     err,
                     traceback.format_exc(),
                 )
+
+    def _handle_callback_signal(self, msg):
+        """Process notification callback signals."""
+        if msg.header.message_type != MessageType.signal:
+            return
+        member = msg.header.fields.get(HeaderFields.member)
+        if member == "ActionInvoked":
+            self._handle_action_invoked(msg.body)
+        elif member == "NotificationClosed":
+            self._handle_notification_closed(msg.body)
+
+    def _handle_action_invoked(self, body):
+        """Handle an ActionInvoked signal."""
+        if len(body) != 2:
+            return
+        notification_id, action_key = body
+        if not isinstance(action_key, str):
+            return
+        action_prefix = f"{self.appname}_"
+        if not action_key.startswith(action_prefix):
+            return
+        notification = self.history.get(notification_id, {"id": notification_id})
+        notification["button"] = action_key[len(action_prefix):]
+        self.callback("button", notification)
+
+    def _handle_notification_closed(self, body):
+        """Handle a NotificationClosed signal."""
+        if len(body) != 2:
+            return
+        notification_id, reason = body
+        notification = self.history.pop(notification_id, {"id": notification_id})
+        notification["reason"] = reason
+        self.callback("closed", notification)
