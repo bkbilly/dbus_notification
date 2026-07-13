@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools~=69.2.0", "wheel~=0.43.0"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name              = "dbus_notification"
-version           = "2026.6.0"
+version           = "2026.7.0"
 description       = "Sends notifications using DBus"
 readme            = "README.md"
 keywords          = ["lnxlink"]
